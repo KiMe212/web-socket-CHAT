@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from app.routers.web_socket import socket
 from app.routers.auth import auth_router
+from app.routers.web_socket import socket
 
 app = FastAPI(title="CHAT", description="Web Socket", version="0.1")
 

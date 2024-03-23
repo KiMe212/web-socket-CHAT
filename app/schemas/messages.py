@@ -10,4 +10,4 @@ class Messages(BaseModel):
 
 
 class OldMessages(BaseModel):
-    list_old_messages: list [Messages]
+    list_old_messages: list[Messages]

@@ -1,5 +1,7 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer, String
+
 from app.database import Base
+
 
 class Room(Base):
     __tablename__ = "room"
