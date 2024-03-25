@@ -5,9 +5,9 @@ class Rooms(BaseModel):
     room: str
 
 
-class Messages(BaseModel):
+class Message(BaseModel):
     name_and_message: tuple
 
 
-class OldMessages(BaseModel):
-    list_old_messages: list[Messages]
+class ListMessages(BaseModel):
+    list_messages: list[Message]

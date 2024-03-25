@@ -1,8 +1,11 @@
 from fastapi import WebSocket
 
+# from app.schemas.connection import Room, ListSocketUser
+
 
 class ConnectionManager:
     def __init__(self):
+        # self.user_rooms: dict[Room, ListSocketUser] = {}
         self.user_rooms: dict[str, list] = {}
 
     async def connect(self, websocket: WebSocket, room: str):

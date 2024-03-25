@@ -1,9 +1,10 @@
 from app.managers.connection import connection_manager
+from app.schemas.rooms import Creator, ListRooms
 
 
 class RoomsManager:
     def __init__(self):
-        self.creator_rooms: dict[str, list] = {}
+        self.creator_rooms: dict[Creator, ListRooms] = {}
 
     def add_room(self, room, user_name):
         if room not in connection_manager.user_rooms:
