@@ -3,7 +3,7 @@ from pydantic import BaseModel, validator
 from app.core.hasher import get_password_hash
 
 
-class CreateUser(BaseModel):
+class CreateUserSchema(BaseModel):
     name: str
     password: str
 
@@ -12,6 +12,6 @@ class CreateUser(BaseModel):
         return get_password_hash(password)
 
 
-class LoginUser(BaseModel):
+class LoginUserSchema(BaseModel):
     name: str
     password: str
