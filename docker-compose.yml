@@ -9,10 +9,22 @@ services:
       POSTGRES_PASSWORD: sob
     ports:
       - "5422:5432"
+    volumes:
+      - ./app:/backend/app
 
-  socket:
-    build: ./
-    command: uvicorn app.main:app --host 0.0.0.0 --port 80
-    container_name: web_socket
-    ports:
-      - "8000:80"
+
+  # socket:
+  #   build: ./
+  #   container_name: web_socket
+  #   ports:
+  #     - "8000:80"
+  #   volumes:
+  #     - ./app:/backend/app
+
+  # alembic:
+  #   build: ./
+  #   command: alembic upgrade head
+  #   volumes:
+  #     - ./app:/backend/app
+  #   depends_on:
+  #     - db
