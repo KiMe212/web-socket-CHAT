@@ -100,7 +100,7 @@ def delete_room(
 
 @socket.get("/room", status_code=status.HTTP_200_OK)
 def get_all_rooms(session: SessionLocal = Depends(get_session)):
-    data_query = select(Room.name)
+    data_query = select(Room.name, Room.user_id)
     rooms = session.execute(data_query).fetchall()
     all_rooms = [i[0] for i in rooms]
     return JSONResponse(content=all_rooms)
@@ -117,7 +117,6 @@ async def websocket_endpoint(
         # check the room
         data_query = select(Room.name, Room.id).where(Room.name == room)
         data_room = session.execute(data_query).mappings().first()
-        print(data_room)
         if room == data_room["name"]:
             # connect
             connection_manager.user_rooms[room] = []
@@ -127,7 +126,6 @@ async def websocket_endpoint(
                 Message.room_id == data_room["id"]
             )
             old_message = session.execute(data_query).mappings().all()
-            print(old_message)
             all_message = [(f"{i['user_name']}: {i['message']}") for i in old_message]
             await connection_manager.broadcast_messages(room, all_message)
             try:

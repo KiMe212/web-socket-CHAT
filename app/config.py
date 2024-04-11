@@ -9,7 +9,8 @@ DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_HOST = os.environ.get("DB_HOST")
 DB_PORT = os.environ.get("DB_PORT")
 DB_NAME = os.environ.get("DB_NAME")
-DB_NAME = os.environ.get("DB_CONTAINER")
+# DB_NAME = os.environ.get("DB_HOST_CONTAINER")
+# DB_NAME = os.environ.get("DB_PORT_CONTAINER")
 
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
