@@ -1,22 +1,18 @@
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from sqlalchemy import insert, select, update
 
 from app.core.hasher import verify_password
 from app.database import SessionLocal, get_session
 from app.models.users import User
-from app.schemas.users import CreateUser, LoginUser
-from app.token_create import create_token
+from app.schemas.users import CreateUserSchema, LoginUserSchema
+from app.token_create import check_token, create_token
 
 auth_router = APIRouter(tags=["auth"])
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-
-@auth_router.post("/signup", status_code=status.HTTP_200_OK)
-def sing_up(
-    data: CreateUser, session: SessionLocal = Depends(get_session)
-):  # not use Depends
+@auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
+def sign_up(data: CreateUserSchema, session: SessionLocal = Depends(get_session)):
     if (
         not session.execute(select(User.name).where(User.name == data.name))
         .mappings()
@@ -27,14 +23,14 @@ def sing_up(
         user_id = session.scalars(data_query).first()
         session.commit()
 
-        return {"ID": user_id}
+        return JSONResponse(content={"ID": user_id})
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, detail="That name already exists"
     )
 
 
-@auth_router.post("/login", status_code=status.HTTP_200_OK)
-def login(data: LoginUser, session: SessionLocal = Depends(get_session)):
+@auth_router.post("/login", status_code=status.HTTP_201_CREATED)
+def login(data: LoginUserSchema, session: SessionLocal = Depends(get_session)):
 
     data_query = select(User.password, User.id).where(User.name == data.name)
     data_user = session.execute(data_query).mappings().first()
@@ -49,46 +45,32 @@ def login(data: LoginUser, session: SessionLocal = Depends(get_session)):
         session.execute(data_user)
         session.commit()
 
-        return Response(
-            status_code=status.HTTP_200_OK,
-            headers={"Authorization": f"Token {data_token}"},
-            content="You are in",
-        )
+        return JSONResponse(content={"Token": data_token})
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, detail="Wrong password or name"
     )
 
 
-@auth_router.delete("/logout")
+@auth_router.delete("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
-    authorization: str = Header(None), session: SessionLocal = Depends(get_session)
+    session: SessionLocal = Depends(get_session), user: dict = Depends(check_token)
 ):
-    if authorization is not None:
+    if user:
         data_user = (
-            session.execute(select(User.id).where(User.token == authorization[6:]))
-            .mappings()
-            .first()
+            update(User)
+            .where(User.id == user["id"])
+            .values(token=None)
+            .returning(User.id)
         )
-        session.commit()
-        if data_user:
-            data_user = (
-                update(User)
-                .where(User.id == data_user["id"])
-                .values(token=None)
-                .returning(User.id)
-            )
 
-            user_id = session.execute(data_user)
-            session.commit()
-            if user_id:
-                return "OK"
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, detail="don't have in DB"
-                )
+        user_id = session.execute(data_user)
+        session.commit()
+        if user_id:
+            return JSONResponse(content={"status": "Success"})
         else:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="You are not auth"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="DB don't have your token",
             )
     else:
         raise HTTPException(

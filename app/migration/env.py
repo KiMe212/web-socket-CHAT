@@ -5,10 +5,11 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.database import Base
+from app.models.messages import Message
 from app.models.rooms import Room
 from app.models.users import User
 
-_ = (User, Room)
+_ = (User, Room, Message)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
