@@ -124,7 +124,6 @@ async def websocket_endpoint(
 
             # connect
             await connection_manager.connect(websocket, room)
-            print(connection_manager.user_rooms)
 
             # add new user in room
             data_query = (
@@ -157,7 +156,7 @@ async def websocket_endpoint(
 
             # show new user
             user_name = user["name"]
-            await connection_manager.broadcast_user(
+            await connection_manager.broadcast_new_user(
                 room, (f"User {user_name} entered the room")
             )
 
@@ -190,7 +189,7 @@ async def websocket_endpoint(
                     .where(UsersRoom.room_id == data_room["id"])
                 )
                 session.commit()
-                await connection_manager.broadcast_list_users(
+                await connection_manager.broadcast_delete_user(
                     room, (f"User {user_name} exited the room")
                 )
 
