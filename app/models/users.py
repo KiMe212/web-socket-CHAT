@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 
 from app.database import Base
 
@@ -10,3 +11,4 @@ class User(Base):
     name = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     token = Column(String, nullable=True)
+    users_room = relationship("UsersRoom")

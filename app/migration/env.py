@@ -8,8 +8,9 @@ from app.database import Base
 from app.models.messages import Message
 from app.models.rooms import Room
 from app.models.users import User
+from app.models.users_room import UsersRoom
 
-_ = (User, Room, Message)
+_ = (User, Room, Message, UsersRoom)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

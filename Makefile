@@ -14,7 +14,7 @@ migration:
 	docker-compose exec socket alembic revision --autogenerate -m "My migration"
 
 upgrade-version:
-	docekr-compose exec socket alembic upgrade head
+	docker-compose exec socket alembic upgrade head
 
 downgrade-version:
-	docekr-compose exec socket alembic downgrade -1
+	docker-compose exec socket alembic downgrade -1
