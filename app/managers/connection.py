@@ -10,11 +10,20 @@ class ConnectionManager:
 
     async def connect(self, websocket: WebSocket, room: str):
         await websocket.accept()
+        if not self.user_rooms.get(room):
+            self.user_rooms[room] = []
         self.user_rooms[room] = self.user_rooms.setdefault(room, []) + [websocket]
 
-    async def broadcast_messages(self, room: str, messages: list):
-        for msg in messages:
+    async def broadcast_messages(self, room: str, message: list):
+        for msg in message:
             await self.user_rooms[room][-1].send_text(msg)
+
+    async def broadcast_user(self, room: str, message: list):
+        for connection in self.user_rooms[room][:-1]:
+            await connection.send_text(message)
+
+    async def broadcast_list_users(self, room: str, message: list):
+        await self.user_rooms[room][-1].send_text(message)
 
     async def broadcast(self, room: str, message: str):
         for connection in self.user_rooms[room]:

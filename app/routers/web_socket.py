@@ -123,8 +123,8 @@ async def websocket_endpoint(
         if room == data_room["name"]:
 
             # connect
-            connection_manager.user_rooms[room] = []
             await connection_manager.connect(websocket, room)
+            print(connection_manager.user_rooms)
 
             # add new user in room
             data_query = (
@@ -143,7 +143,7 @@ async def websocket_endpoint(
             )
             all_users = session.execute(data_query).mappings().all()
             users_room = "\n".join([i["name"] for i in all_users])
-            await connection_manager.broadcast(
+            await connection_manager.broadcast_list_users(
                 room, (f"Users is online:\n {users_room}")
             )
 
@@ -157,14 +157,14 @@ async def websocket_endpoint(
 
             # show new user
             user_name = user["name"]
-            await connection_manager.broadcast(
+            await connection_manager.broadcast_user(
                 room, (f"User {user_name} entered the room")
             )
 
             try:
                 while True:
 
-                    # give message
+                    # send message
                     data = await websocket.receive_text()
                     await connection_manager.broadcast(room, f"{user_name}: {data}")
                     if data:
@@ -190,7 +190,7 @@ async def websocket_endpoint(
                     .where(UsersRoom.room_id == data_room["id"])
                 )
                 session.commit()
-                await connection_manager.broadcast(
+                await connection_manager.broadcast_list_users(
                     room, (f"User {user_name} exited the room")
                 )
 
