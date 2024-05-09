@@ -6,7 +6,7 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy import delete, insert, select
 
 from app.database import SessionLocal, get_session
@@ -52,8 +52,13 @@ def create_room(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="That room is exist"
             )
+    # else:
+    #     return RedirectResponse("localhost:8000/login")
+    # for typer
     else:
-        return RedirectResponse("localhost:8000/login")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="You aren't auth"
+        )
 
 
 @socket.delete("/room", status_code=status.HTTP_204_NO_CONTENT)
@@ -97,8 +102,13 @@ def delete_room(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="That room isn't exist"
             )
+    # else:
+    #     return RedirectResponse("localhost:8000/login")
+    # for typer
     else:
-        return RedirectResponse("localhost:8000/login")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="You aren't auth"
+        )
 
 
 @socket.get("/room", status_code=status.HTTP_200_OK)
