@@ -1,15 +1,13 @@
-# import subprocess
+import os
 
 import requests
 import typer
-from websockets import connect
 
 cli = typer.Typer()
 
 url = "http://127.0.0.1:8000"
 
-
-token = {}
+user_token = "e0016504-6119-410e-995a-b205b55e7aea"
 
 
 @cli.command()
@@ -42,7 +40,7 @@ def login(name: str, password: str):
 def logout():
     response = requests.delete(
         url=url + "/logout",
-        headers={"Authorization": "Token 6d565122-ba07-42c4-9b71-844092e49e66"},
+        headers={"Authorization": f"Token {user_token}"},
     )
     status_response = response.status_code
     if status_response == 200:
@@ -56,7 +54,7 @@ def create_room(name_room: str):
     response = requests.post(
         url=url + "/room",
         json={"name": name_room},
-        headers={"Authorization": "Token a47dde21-0f6c-4a7f-ae57-d35a6c43b759"},
+        headers={"Authorization": f"Token {user_token}"},
     )
     status_response = response.status_code
     print(status_response)
@@ -73,7 +71,7 @@ def delete_room(name_room: str):
     response = requests.delete(
         url=url + "/room",
         json={"name": name_room},
-        headers={"Authorization": "Token a47dde21-0f6c-4a7f-ae57-d35a6c43b759"},
+        headers={"Authorization": f"Token {user_token}"},
     )
     status_response = response.status_code
     if status_response == 200:
@@ -88,7 +86,6 @@ def delete_room(name_room: str):
 def all_rooms():
     response = requests.get(
         url=url + "/room",
-        headers={"Authorization": "Token a47dde21-0f6c-4a7f-ae57-d35a6c43b759"},
     )
     status_response = response.status_code
     if status_response == 200:
@@ -97,17 +94,10 @@ def all_rooms():
 
 @cli.command()
 def connection(room: str):
-    async def get_websocket():
-        uri = (
-            "ws://localhost:8000/ws?room="
-            + room
-            + " -H 'Authorization: Token a47dde21-0f6c-4a7f-ae57-d35a6c43b759'"
-        )  # Подставьте свой URI
-        async with connect(uri) as websocket:
-            async for message in websocket:
-                typer.echo(f"Received message: {message}")
-
-    typer.run(get_websocket)
+    cmd = (
+        f"wscat -c 127.0.0.1:8000/ws?room={room} -H 'Authorization: Token {user_token}'"
+    )
+    os.system(cmd)
 
 
 if __name__ == "__main__":
