@@ -5,33 +5,24 @@ bla bla
 
 #### Для запуска базы данных и веб приложения.
 ```
-docker-compose up
+make up
 ```
 #### Для установки миграции в базу данных.
 ```
-docker-compose exec socket alembic upgrade head
+make upgrade-version
 ```
 ## Использование:
 
+Здесь используется библиотека `typer`.
 
-#### Создание пользователя:
+### Все комадны должны выпольнять в карневой директории проекта.
 
-* [POST] Регистрации [localhost:8000/signup](localhost:8000/signup)
+`/web-socker-CHAT`
 
-* [POST]Авторизация  [localhost:8000/login](localhost:8000/login)
+### Команды
 
-#### Создание комнат:
+`python3 typer_user.py [команда] [аргументы]`
 
-* [POST] Создать комнату [localhost:8000/room](localhost:8000/room)
+#### Для просмотра всех команд используйте
 
-* [GET] Просмотр всех комнат [localhost:8000/room](localhost:8000/room)
-
-* [DELET] Удалить комнату [localhost:8000/room](localhost:8000/room)
-
-#### Подключение к комнате:
-
-Для подключение к комнате, я использую программу [wscat](https://github.com/websockets/wscat). Но вы можете использовать и другие.
-
-```
-wscat -c localhost:8000/ws?room={name_room} -H 'Authorization: Token {your token}'
-```
+`python3 typer-user.py --help`

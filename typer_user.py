@@ -7,7 +7,7 @@ cli = typer.Typer()
 
 url = "http://127.0.0.1:8000"
 
-user_token = "e0016504-6119-410e-995a-b205b55e7aea"
+user_token = "0ae04630-6ad9-4acd-b027-7f3e1f9f012f"
 
 
 @cli.command()
@@ -57,11 +57,8 @@ def create_room(name_room: str):
         headers={"Authorization": f"Token {user_token}"},
     )
     status_response = response.status_code
-    print(status_response)
     if status_response == 200:
         print("Success")
-    # elif status_response == 307:
-    #     print("Redirect")
     else:
         print(response.text)
 
