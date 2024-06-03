@@ -6,7 +6,7 @@ from app.core.hasher import verify_password
 from app.database import SessionLocal, get_session
 from app.models.users import User
 from app.schemas.users import CreateUserSchema, LoginUserSchema
-from app.token_create import check_token, create_token
+from app.core.token_create import check_token, create_token
 
 auth_router = APIRouter(tags=["auth"])
 

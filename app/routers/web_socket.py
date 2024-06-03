@@ -16,7 +16,11 @@ from app.models.rooms import Room
 from app.models.users import User
 from app.models.users_room import UsersRoom
 from app.schemas.rooms import RoomSchema
-from app.token_create import check_token
+from app.core.token_create import check_token
+from app.crypt.index import get_price_crypt
+import asyncio
+
+import threading
 
 socket = APIRouter()
 
@@ -52,9 +56,6 @@ def create_room(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="That room is exist"
             )
-    # else:
-    #     return RedirectResponse("localhost:8000/login")
-    # for typer
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="You aren't auth"
@@ -102,9 +103,6 @@ def delete_room(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="That room isn't exist"
             )
-    # else:
-    #     return RedirectResponse("localhost:8000/login")
-    # for typer
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="You aren't auth"
@@ -170,6 +168,11 @@ async def websocket_endpoint(
                 room, (f"User {user_name} entered the room")
             )
 
+            # show index price
+            threading.Thread(target=asyncio.run, args=(get_price_crypt(room),)).start()
+
+            # create_thread(room)
+            
             try:
                 while True:
 

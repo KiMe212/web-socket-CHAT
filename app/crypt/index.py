@@ -1,11 +1,10 @@
 import time
-
 import requests
 
 from app.managers.connection import connection_manager
 
 
-def index_cryptas():
+def price_crypt():
     url = "https://fapi.binance.com/fapi/v1/ticker/price"
 
     list_price = {}
@@ -16,12 +15,12 @@ def index_cryptas():
         data = requests.get(url, params=params)
         price = data.json()["price"]
         list_price[i] = price
-    return list_price  # list_price
+    return list_price
 
 
-def get_index_crypts(room):
+async def get_price_crypt(room):
     while True:
-        time.sleep(3)
-        all_index = index_cryptas()
-        all_index = [",".join([k, j]) for k, j in all_index.items()]
-        connection_manager.broadcast(room, "CRYPTA")
+        all_index = [" = ".join([k, j + "\n"]) for k, j in price_crypt().items()]
+        print(all_index)
+        await connection_manager.broadcast(room, all_index)
+        time.sleep(300)

@@ -1,11 +1,8 @@
 from fastapi import WebSocket
 
-# from app.schemas.connection import Room, ListSocketUser
-
 
 class ConnectionManager:
     def __init__(self):
-        # self.user_rooms: dict[Room, ListSocketUser] = {}
         self.user_rooms: dict[str, list] = {}
 
     async def connect(self, websocket: WebSocket, room: str):
@@ -18,16 +15,20 @@ class ConnectionManager:
         for msg in message:
             await self.user_rooms[room][-1].send_text(msg)
 
+
     async def broadcast_new_user(self, room: str, message: list):
         for connection in self.user_rooms[room][:-1]:
             await connection.send_text(message)
+
 
     async def broadcast_delete_user(self, room: str, message: list):
         for connection in self.user_rooms[room]:
             await connection.send_text(message)
 
+
     async def broadcast_list_users(self, room: str, message: list):
         await self.user_rooms[room][-1].send_text(message)
+
 
     async def broadcast(self, room: str, message: str):
         for connection in self.user_rooms[room]:
