@@ -6,6 +6,20 @@ from sqlalchemy import select
 from app.database import SessionLocal, get_session
 from app.models.users import User
 
+from datetime import datetime, timedelta
+from jose import jwt
+from app.config import ACCESS_TOKEN_EXPIRE_TIME, SECRET_KEY, ALGORITHM
+# for refresh tokens
+from app.config import REFRESH_TOKEN_EXPIRE_TIME, REFRESH_TOKEN_SECRET_KEY
+def create_access_token(data: dict, expiry_time: timedelta | None = None):
+  to_encode = data.copy()
+  if expiry_time:
+    expire = datetime.utcnow() + expiry_time
+  else:
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_TIME)
+  to_encode.update({"exp": expire})
+  encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+  return encoded_jwt
 
 def create_token():
     print(uuid.uuid4())

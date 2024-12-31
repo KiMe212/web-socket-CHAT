@@ -29,6 +29,20 @@ def sign_up(data: CreateUserSchema, session: SessionLocal = Depends(get_session)
     )
 
 
+@auth_router.post("/login")
+async def login_for_access_token(user: LoginUserSchema, db: SessionLocal = Depends(get_session)):
+  if user.email and user.password:
+    user = authenticate_user(db, user.email, user.password)
+    if user:
+      token = create_access_token(data={"sub": user.email})
+      refresh_token = create_refresh_token(data={"sub": user.email,
+                        "id": user.id})
+      response = JSONResponse({"token" : token}, status_code=200)
+      response.set_cookie(key="refresh-Token", value=refresh_token)
+      return response
+  return JSONResponse({"msg": "Invalid Credentials"}, status_code=403)
+
+
 @auth_router.post("/login", status_code=status.HTTP_201_CREATED)
 def login(data: LoginUserSchema, session: SessionLocal = Depends(get_session)):
 
