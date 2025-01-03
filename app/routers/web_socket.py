@@ -6,7 +6,7 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import ORJSONResponse, RedirectResponse
 from sqlalchemy import delete, insert, select
 
 from app.database import SessionLocal, get_session
@@ -43,7 +43,7 @@ def create_room(
                 )
                 room_id = session.scalars(data_query).first()
                 session.commit()
-                return JSONResponse(content={"room_id": room_id})
+                return ORJSONResponse(content={"room_id": room_id})
             except RuntimeError:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST, detail="Something went bad"
@@ -82,7 +82,7 @@ def delete_room(
                     # delete room from user_room that have websocket
                     if connection_manager.user_rooms.get(room.name):
                         del connection_manager.user_rooms[room.name]
-                    return JSONResponse(content={"room_id": room_id})
+                    return ORJSONResponse(content={"room_id": room_id})
                 except RuntimeError:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
@@ -106,7 +106,7 @@ def get_all_rooms(session: SessionLocal = Depends(get_session)):
     data_query = select(Room.name)
     rooms = session.execute(data_query).fetchall()
     all_rooms = [i[0] for i in rooms]
-    return JSONResponse(content=all_rooms)
+    return ORJSONResponse(content=all_rooms)
 
 
 @socket.websocket("/ws")

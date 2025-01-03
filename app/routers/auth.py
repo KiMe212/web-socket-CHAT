@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import ORJSONResponse
 from sqlalchemy import insert, select, update
 
 from app.core.hasher import verify_password
 from app.database import SessionLocal, get_session
 from app.models.users import User
 from app.schemas.users import CreateUserSchema, LoginUserSchema
-from app.token_create import check_token, create_token, create_access_token, create_refresh_token
+from app.token_create import create_access_token, create_refresh_token, get_current_user
 
 auth_router = APIRouter(tags=["auth"])
 
@@ -23,43 +23,27 @@ def sign_up(data: CreateUserSchema, session: SessionLocal = Depends(get_session)
         user_id = session.scalars(data_query).first()
         session.commit()
 
-        return JSONResponse(content={"ID": user_id})
+        return ORJSONResponse(content={"ID": user_id})
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, detail="That name already exists"
     )
 
 
-@auth_router.post("/login")
-async def login_for_access_token(user: LoginUserSchema, db: SessionLocal = Depends(get_session)):
-  if user.email and user.password:
-    user = authenticate_user(db, user.email, user.password)
-    if user:
-      token = create_access_token(data={"sub": user.email})
-      refresh_token = create_refresh_token(data={"sub": user.email,
-                        "id": user.id})
-      response = JSONResponse({"token" : token}, status_code=200)
-      response.set_cookie(key="refresh-Token", value=refresh_token)
-      return response
-  return JSONResponse({"msg": "Invalid Credentials"}, status_code=403)
-
-
 @auth_router.post("/login", status_code=status.HTTP_201_CREATED)
-def login(data: LoginUserSchema, session: SessionLocal = Depends(get_session)):
+def login(user: LoginUserSchema, session: SessionLocal = Depends(get_session)):
 
-    data_query = select(User.password, User.id).where(User.name == data.name)
+    data_query = select(User.password, User.id).where(User.name == user.name)
     data_user = session.execute(data_query).mappings().first()
 
-    if data_user is not None and verify_password(data.password, data_user["password"]):
-        data_token = create_token()
+    if data_user is not None and verify_password(user.password, data_user["password"]):
 
-        data_user = (
-            update(User).where(User.id == data_user["id"]).values(token=data_token)
-        )
+        token = create_access_token(user.name)
+        refresh_token = create_refresh_token(user.name)
+        
+        response = ORJSONResponse({"token" : token}, status_code=200)
+        response.set_cookie(key="refresh-Token", value=refresh_token)
+        return response
 
-        session.execute(data_user)
-        session.commit()
-
-        return JSONResponse(content={"Token": data_token})
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, detail="Wrong password or name"
     )
@@ -67,26 +51,12 @@ def login(data: LoginUserSchema, session: SessionLocal = Depends(get_session)):
 
 @auth_router.delete("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
-    session: SessionLocal = Depends(get_session), user: dict = Depends(check_token)
+    user: dict = Depends(get_current_user)
 ):
-    if user:
-        data_user = (
-            update(User)
-            .where(User.id == user["id"])
-            .values(token=None)
-            .returning(User.id)
-        )
-
-        user_id = session.execute(data_user)
-        session.commit()
-        if user_id:
-            return JSONResponse(content={"status": "Success"})
+        if user:
+            return ORJSONResponse(content={"status": "Success"})
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="DB don't have your token",
             )
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="You are not auth"
-        )
