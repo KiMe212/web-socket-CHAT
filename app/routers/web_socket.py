@@ -16,7 +16,7 @@ from app.models.rooms import Room
 from app.models.users import User
 from app.models.users_room import UsersRoom
 from app.schemas.rooms import RoomSchema
-from app.token_create import check_token, get_current_user
+from app.token_create import get_current_user
 
 socket = APIRouter()
 

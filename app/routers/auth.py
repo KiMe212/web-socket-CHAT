@@ -1,7 +1,7 @@
 from urllib import response
-from fastapi import APIRouter, Depends, HTTPException, status, Response
-from fastapi.responses import ORJSONResponse, RedirectResponse
 
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi.responses import ORJSONResponse
 from sqlalchemy import insert, select, update
 
 from app.core.hasher import verify_password
@@ -41,8 +41,8 @@ def login(user: LoginUserSchema, session: SessionLocal = Depends(get_session)):
 
         token = create_access_token(data={"sub": user.name})
         refresh_token = create_refresh_token(data={"sub": user.name})
-        
-        response = ORJSONResponse({"token" : token}, status_code=200)
+
+        response = ORJSONResponse({"token": token}, status_code=200)
         response.set_cookie(key="refresh-Token", value=refresh_token, httponly=True)
         return response
 
@@ -53,17 +53,20 @@ def login(user: LoginUserSchema, session: SessionLocal = Depends(get_session)):
 
 @auth_router.delete("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
+    response: Response,
     user: dict = Depends(get_current_user),
 ):
-        print(user)
-        if user:
-            # return ORJSONResponse(status_code=status.HTTP_204_NO_CONTENT, content={"status": "Success"})
-            # response.status_code = 200
-            # response.headers["status"] = "Success"
-
-            return ORJSONResponse(status_code=status.HTTP_204_NO_CONTENT, content={"status": "Success"})
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="DB don't have your token",
-            )
+    print(user)
+    if user:
+        # return ORJSONResponse(status_code=status.HTTP_204_NO_CONTENT, content={"status": "Success"})
+        print(response.headers)
+        return ORJSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"status": "Success"},
+            headers=response.headers,
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="DB don't have your token",
+        )

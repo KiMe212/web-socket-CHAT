@@ -1,20 +1,13 @@
-import uuid
-
 from datetime import datetime, timedelta
-from jose import jwt
 
-from fastapi import Depends, Header, HTTPException, status, Request, Response
+from fastapi import Depends, Header, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
-
+from jose import JWTError, jwt
 from sqlalchemy import select
 
+from app.config import config
 from app.database import SessionLocal, get_session
 from app.models.users import User
-
-from jose import JWTError, jwt
-
-
-from app.config import ACCESS_TOKEN_EXPIRE_TIME, SECRET_KEY, ALGORITHM,  REFRESH_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_SECRET_KEY
 
 
 def create_access_token(data: dict, expiry_time: timedelta | None = None):
@@ -22,9 +15,13 @@ def create_access_token(data: dict, expiry_time: timedelta | None = None):
     if expiry_time:
         expire = datetime.utcnow() + expiry_time
     else:
-        expire = datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_TIME))
+        expire = datetime.utcnow() + timedelta(
+            minutes=int(config.tokens.access_token_expire_time)
+        )
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        encoded_jwt = jwt.encode(
+            to_encode, config.tokens.secret_key, algorithm=config.tokens.algorithim
+        )
     return encoded_jwt
 
 
@@ -33,75 +30,101 @@ def create_refresh_token(data: dict, expires_delta: timedelta | None = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=int(REFRESH_TOKEN_EXPIRE_MINUTES))
+        expire = datetime.utcnow() + timedelta(
+            minutes=int(config.tokens.refresh_token_expire_minutes)
+        )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, REFRESH_TOKEN_SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode,
+        config.tokens.refresh_token_secret_key,
+        algorithm=config.tokens.algorithim,
+    )
     return encoded_jwt
 
 
-def decode_token(token: str, type: str = 'access') -> str | None:
+def decode_token(token: str, type: str = "access") -> str | None:
     try:
-        if type == 'refresh':
-            payload = jwt.decode(token, REFRESH_TOKEN_SECRET_KEY, algorithms=[ALGORITHM])
-        else:    
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  
+        if type == "refresh":
+            payload = jwt.decode(
+                token,
+                config.tokens.refresh_token_secret_key,
+                algorithms=[config.tokens.algorithim],
+            )
+        else:
+            payload = jwt.decode(
+                token, config.tokens.secret_key, algorithms=[config.tokens.algorithim]
+            )
         return payload
     except JWTError as EROOR:
         return None
-    
-    
+
+
 def get_refersh_token(request: Request):
     cookie = request.cookies
     if not cookie:
         return None
-    if cookie.get('refresh-Token'):
-        return cookie.get('refresh-Token')
-    
+    if cookie.get("refresh-Token"):
+        return cookie.get("refresh-Token")
 
-def update_access_token(request: Request, response: Response, session: SessionLocal = Depends(get_session)):
+
+def update_access_token(
+    request: Request, response: Response, session: SessionLocal = Depends(get_session)
+):
     refersh_token = get_refersh_token(request)
-    payload_data = decode_token(token=refersh_token, type='refresh')
+    payload_data = decode_token(token=refersh_token, type="refresh")
     print(f"{payload_data=}")
     if not payload_data:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Access and refraxh tokens is finishd")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Access and refraxh tokens is finishd",
+        )
         # return RedirectResponse("localhost:8000/login", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
     name = payload_data.get("sub")
     if not name:
-        return RedirectResponse("localhost:8000/login", status_code=status.HTTP_307_TEMPORARY_REDIRECT) 
+        return RedirectResponse(
+            "localhost:8000/login", status_code=status.HTTP_307_TEMPORARY_REDIRECT
+        )
     data_query = select(User.password, User.id).where(User.name == name)
     data_user = session.execute(data_query).mappings().first()
     if not data_user:
         raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, detail="User are not register"
-    )
-    token = create_access_token(data={"sub":name})
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User are not register"
+        )
+    token = create_access_token(data={"sub": name})
+    print("ACCESS_TOKEN")
     response.headers["Authorization"] = token
     return data_user
-    
 
-def get_current_user(request: Request, response: Response, authorization: str = Header(None), session: SessionLocal = Depends(get_session)):
+
+def get_current_user(
+    request: Request,
+    response: Response,
+    authorization: str = Header(None),
+    session: SessionLocal = Depends(get_session),
+):
     token_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid authentication credentials",
-        headers={"Jwt-Token": ""},)   
+        headers={"Jwt-Token": ""},
+    )
     if not authorization:
         raise token_exception
     payload_data: str = decode_token(authorization)
 
-    if payload_data:
+    # if payload_data:
+    if None:
         name = payload_data.get("sub")
         if not name:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Don't corкect token")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Don't corкect token"
+            )
         data_query = select(User.password, User.id).where(User.name == name)
         data_user = session.execute(data_query).mappings().first()
         if not data_user:
             raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, detail="User are not register"
-    )
+                status_code=status.HTTP_400_BAD_REQUEST, detail="User are not register"
+            )
+        print(payload_data)
         return data_user
     else:
         return update_access_token(request, response, session)
-
-
-def check_token():
-    return "Hi"
