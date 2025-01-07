@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.responses import ORJSONResponse
+from urllib import response
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi.responses import ORJSONResponse, RedirectResponse
+
 from sqlalchemy import insert, select, update
 
 from app.core.hasher import verify_password
@@ -37,11 +39,11 @@ def login(user: LoginUserSchema, session: SessionLocal = Depends(get_session)):
 
     if data_user is not None and verify_password(user.password, data_user["password"]):
 
-        token = create_access_token(user.name)
-        refresh_token = create_refresh_token(user.name)
+        token = create_access_token(data={"sub": user.name})
+        refresh_token = create_refresh_token(data={"sub": user.name})
         
         response = ORJSONResponse({"token" : token}, status_code=200)
-        response.set_cookie(key="refresh-Token", value=refresh_token)
+        response.set_cookie(key="refresh-Token", value=refresh_token, httponly=True)
         return response
 
     raise HTTPException(
@@ -51,10 +53,15 @@ def login(user: LoginUserSchema, session: SessionLocal = Depends(get_session)):
 
 @auth_router.delete("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(get_current_user),
 ):
+        print(user)
         if user:
-            return ORJSONResponse(content={"status": "Success"})
+            # return ORJSONResponse(status_code=status.HTTP_204_NO_CONTENT, content={"status": "Success"})
+            # response.status_code = 200
+            # response.headers["status"] = "Success"
+
+            return ORJSONResponse(status_code=status.HTTP_204_NO_CONTENT, content={"status": "Success"})
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

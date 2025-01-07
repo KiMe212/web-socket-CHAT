@@ -16,7 +16,7 @@ from app.models.rooms import Room
 from app.models.users import User
 from app.models.users_room import UsersRoom
 from app.schemas.rooms import RoomSchema
-from app.token_create import check_token
+from app.token_create import check_token, get_current_user
 
 socket = APIRouter()
 
@@ -24,7 +24,7 @@ socket = APIRouter()
 @socket.post("/room", status_code=status.HTTP_201_CREATED)
 def create_room(
     new_room: RoomSchema,
-    user: dict = Depends(check_token),
+    user: dict = Depends(get_current_user),
     session: SessionLocal = Depends(get_session),
 ):
     if user:
@@ -59,7 +59,7 @@ def create_room(
 @socket.delete("/room", status_code=status.HTTP_204_NO_CONTENT)
 def delete_room(
     room: RoomSchema,
-    user: dict = Depends(check_token),
+    user: dict = Depends(get_current_user),
     session: SessionLocal = Depends(get_session),
 ):
     if user:
@@ -113,7 +113,7 @@ def get_all_rooms(session: SessionLocal = Depends(get_session)):
 async def websocket_endpoint(
     websocket: WebSocket,
     room: str,
-    user: dict = Depends(check_token),
+    user: dict = Depends(get_current_user),
     session: SessionLocal = Depends(get_session),
 ):
     if user:
