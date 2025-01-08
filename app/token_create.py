@@ -8,7 +8,6 @@ from app.models.users import User
 
 
 def create_token():
-    print(uuid.uuid4())
     return str(uuid.uuid4())
 
 
@@ -20,7 +19,7 @@ def check_token(
             data_user = (
                 session.execute(
                     select(User.name, User.id).where(
-                        User.token == authorization.split()[1]
+                        User.token == authorization
                     )
                 )
                 .mappings()
