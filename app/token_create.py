@@ -76,7 +76,7 @@ def update_access_token(
     if not payload_data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Access and refraxh tokens is finishd",
+            detail="Access and refraxh tokens is expired",
         )
         # return RedirectResponse("localhost:8000/login", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
     name = payload_data.get("sub")
@@ -91,7 +91,6 @@ def update_access_token(
             status_code=status.HTTP_400_BAD_REQUEST, detail="User are not register"
         )
     token = create_access_token(data={"sub": name})
-    print("ACCESS_TOKEN")
     response.headers["Authorization"] = token
     return data_user
 
@@ -111,12 +110,11 @@ def get_current_user(
         raise token_exception
     payload_data: str = decode_token(authorization)
 
-    # if payload_data:
-    if None:
+    if payload_data:
         name = payload_data.get("sub")
         if not name:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Don't corкect token"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Don't corect token"
             )
         data_query = select(User.password, User.id).where(User.name == name)
         data_user = session.execute(data_query).mappings().first()
@@ -124,7 +122,7 @@ def get_current_user(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="User are not register"
             )
-        print(payload_data)
         return data_user
     else:
         return update_access_token(request, response, session)
+

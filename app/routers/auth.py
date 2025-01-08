@@ -1,5 +1,3 @@
-from urllib import response
-
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import ORJSONResponse
 from sqlalchemy import insert, select, update
@@ -56,17 +54,17 @@ def logout(
     response: Response,
     user: dict = Depends(get_current_user),
 ):
-    print(user)
     if user:
         # return ORJSONResponse(status_code=status.HTTP_204_NO_CONTENT, content={"status": "Success"})
-        print(response.headers)
-        return ORJSONResponse(
-            status_code=status.HTTP_200_OK,
-            content={"status": "Success"},
-            headers=response.headers,
-        )
+        response.status_code = status.HTTP_204_NO_CONTENT
+        # return ORJSONResponse(
+        #     status_code=status.HTTP_200_OK,
+        #     content={"status": "Success"},
+            # headers=response.headers,
+        # )
+        return response
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="DB don't have your token",
+            detail="Token are't validate",
         )

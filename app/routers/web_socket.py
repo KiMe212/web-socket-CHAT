@@ -5,6 +5,7 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
     status,
+    Response,
 )
 from fastapi.responses import ORJSONResponse, RedirectResponse
 from sqlalchemy import delete, insert, select
@@ -23,6 +24,7 @@ socket = APIRouter()
 
 @socket.post("/room", status_code=status.HTTP_201_CREATED)
 def create_room(
+    response: Response,
     new_room: RoomSchema,
     user: dict = Depends(get_current_user),
     session: SessionLocal = Depends(get_session),
@@ -43,7 +45,7 @@ def create_room(
                 )
                 room_id = session.scalars(data_query).first()
                 session.commit()
-                return ORJSONResponse(content={"room_id": room_id})
+                return ORJSONResponse(status_code=status.HTTP_201_CREATED, content={"room_id": room_id}, headers=response.headers)
             except RuntimeError:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST, detail="Something went bad"
@@ -58,6 +60,7 @@ def create_room(
 
 @socket.delete("/room", status_code=status.HTTP_204_NO_CONTENT)
 def delete_room(
+    response: Response,
     room: RoomSchema,
     user: dict = Depends(get_current_user),
     session: SessionLocal = Depends(get_session),
@@ -82,7 +85,7 @@ def delete_room(
                     # delete room from user_room that have websocket
                     if connection_manager.user_rooms.get(room.name):
                         del connection_manager.user_rooms[room.name]
-                    return ORJSONResponse(content={"room_id": room_id})
+                    return ORJSONResponse(status_code=status.HTTP_201_CREATED, content={"room_id": room_id}, headers=response.headers)
                 except RuntimeError:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,

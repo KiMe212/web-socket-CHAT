@@ -40,8 +40,8 @@ class TokenSettings(BaseSettings):
     secret_key: str = "8334587dec44166195761c7a06ac1c0a5237269de32b5f4ad94db17e0cb43862"
     algorithim: str = "HS256"
 
-    access_token_expire_time: int = 1
-    refresh_token_expire_minutes: int = 50
+    access_token_expire_time: int = 2
+    refresh_token_expire_minutes: int = 5
     refresh_token_secret_key: str = (
         "4f5e0a05a030253b1e9824c5463919ffd086656611dee061a6516038341bcaf2"
     )
