@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import insert, select, update
 
 from app.core.hasher import verify_password
-from app.database import SessionLocal, get_session
+from app.database import SessionLocal, db_session_dependency
 from app.models.users import User
 from app.schemas.users import CreateUserSchema, LoginUserSchema
 from app.token_create import check_token, create_token
@@ -12,16 +12,14 @@ auth_router = APIRouter(tags=["auth"])
 
 
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
-def sign_up(data: CreateUserSchema, session: SessionLocal = Depends(get_session)):
-    if (
-        not session.execute(select(User.name).where(User.name == data.name))
-        .mappings()
-        .first()
-    ):
+async def sign_up(data: CreateUserSchema, session: SessionLocal = Depends(db_session_dependency)):
+    result = await session.execute(select(User.name).where(User.name == data.name))
+    if not result.mappings().first():
 
         data_query = insert(User).values(**data.dict()).returning(User.id)
-        user_id = session.scalars(data_query).first()
-        session.commit()
+        result = await session.scalars(data_query)
+        user_id = result.first()
+        await session.commit()
 
         return JSONResponse(content={"ID": user_id})
     raise HTTPException(
@@ -29,21 +27,22 @@ def sign_up(data: CreateUserSchema, session: SessionLocal = Depends(get_session)
     )
 
 
-@auth_router.post("/login", status_code=status.HTTP_201_CREATED)
-def login(data: LoginUserSchema, session: SessionLocal = Depends(get_session)):
+@auth_router.post("/login", status_code=status.HTTP_200_OK)
+async def login(data: LoginUserSchema, session: SessionLocal = Depends(db_session_dependency)):
 
-    data_query = select(User.password, User.id).where(User.name == data.name)
-    data_user = session.execute(data_query).mappings().first()
+    stmt = select(User.password, User.id).where(User.name == data.name)
+    result = await session.execute(stmt)
+    data_user = result.mappings().first()
 
     if data_user is not None and verify_password(data.password, data_user["password"]):
         data_token = create_token()
 
-        data_user = (
+        stmt = (
             update(User).where(User.id == data_user["id"]).values(token=data_token)
         )
 
-        session.execute(data_user)
-        session.commit()
+        await session.execute(stmt)
+        await session.commit()
 
         return JSONResponse(content={"Token": data_token})
     raise HTTPException(
@@ -52,20 +51,20 @@ def login(data: LoginUserSchema, session: SessionLocal = Depends(get_session)):
 
 
 @auth_router.delete("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(
-    session: SessionLocal = Depends(get_session), user: dict = Depends(check_token)
+async def logout(
+    session: SessionLocal = Depends(db_session_dependency), user: dict = Depends(check_token)
 ):
     if user:
-        data_user = (
+        stmt = (
             update(User)
             .where(User.id == user["id"])
             .values(token=None)
             .returning(User.id)
         )
 
-        user_id = session.execute(data_user)
-        session.commit()
-        if user_id:
+        result = await session.execute(stmt)
+        await session.commit()
+        if result:
             return JSONResponse(content={"status": "Success"})
         else:
             raise HTTPException(

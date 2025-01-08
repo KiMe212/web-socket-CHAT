@@ -1,21 +1,32 @@
-from sqlalchemy import create_engine
+from contextlib import asynccontextmanager
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-from app.config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER
-
-SQLALCHEMY_DATABASE_URL = (
-    f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
 )
+from typing import AsyncGenerator
 
+from app.config import config
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Создание асинхронного движка и сессии
+engine: AsyncEngine = create_async_engine(config.db.url)
+SessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)
 
+@asynccontextmanager
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with SessionLocal() as session:
+        try:
+            yield session
+        except SQLAlchemyError as exc:
+            await session.rollback()
+            raise exc
 
-def get_session():
-    with SessionLocal() as session:
+# Функция для зависимости сессии
+async def db_session_dependency() -> AsyncGenerator[AsyncSession, None]:
+    async with get_session() as session:
         yield session
-
 
 Base = declarative_base()
